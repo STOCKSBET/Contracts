@@ -7,7 +7,13 @@ contract StocksBettingController {
     bool paused;
     Betting betting;
 
-    mapping (address => uint256) bettingIndex;
+
+    struct SetupMoment {
+        uint256 momentInt;
+        string momentString;
+    }
+
+    mapping (address => SetupMoment) public bettingIndex;
     event BettingDeployed(address _address, address _owner, uint256 _time);
 
     modifier onlyOwmner {
@@ -24,11 +30,12 @@ contract StocksBettingController {
         owner = msg.sender;
     }
     
-    function createBetting() public isNotPaused {
+    function createBetting(string momentSetup, string momentCloseValue, string momentOpen1MValue) public isNotPaused {
         betting = (new Betting).value(0.1 ether)();
-        bettingIndex[betting] = now;
-        // neet to setup duration
-        assert(betting.setupBetting("2018-02-07", "2018-02-08 15:01:00", 960, 60));
+        bettingIndex[betting].momentInt = now;
+        bettingIndex[betting].momentString = momentSetup;
+
+        assert(betting.setupBetting(momentSetup, momentCloseValue, momentOpen1MValue, 960, 60));
         BettingDeployed(address(betting), betting.owner(), now);
     }
     
