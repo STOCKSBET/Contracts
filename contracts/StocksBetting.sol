@@ -128,7 +128,7 @@ contract StocksBetting is usingOraclize {
         } else {
             if (actionStatus.isStart) {
                 stocksIndex[stockId].priceEnd = stringToUintNormalize(result);
-                stocksCount = stocksCount - 1;
+                stocksCount = stocksCount.sub(1);
                 if (stocksCount == 0) {
                     reward();
                 }
@@ -144,10 +144,10 @@ contract StocksBetting is usingOraclize {
         if (bettorsIndex[msg.sender].betsCount > 0) {
             for (i = 0; i < bettorsIndex[msg.sender].betsCount; i++) {
                 if (!bettorsIndex[msg.sender].bets[i].isCancelled) {
-                    bettorsIndex[msg.sender].canceledBetsCount.add(1);
+                    bettorsIndex[msg.sender].canceledBetsCount = bettorsIndex[msg.sender].canceledBetsCount.add(1);
                     bettorsIndex[msg.sender].bets[i].isCancelled = true;
                     stocksIndex[stock].totalPool = (stocksIndex[stock].totalPool).sub(bettorsIndex[msg.sender].bets[i].amount);
-                    stocksIndex[stock].betsCount = stocksIndex[stock].canceledBetsCount.add(1);
+                    stocksIndex[stock].betsCount = stocksIndex[stock].betsCount.sub(1);
                     Withdraw(msg.sender, bettorsIndex[msg.sender].bets[i].amount);
                 }
             }
@@ -161,7 +161,7 @@ contract StocksBetting is usingOraclize {
         currentBet.amount = msg.value;
         currentBet.stock = stock;
         bettorsIndex[msg.sender].bets.push(currentBet);
-        bettorsIndex[msg.sender].betsCount.add(1);
+        bettorsIndex[msg.sender].betsCount = bettorsIndex[msg.sender].betsCount.add(1);
         stocksIndex[stock].totalPool = (stocksIndex[stock].totalPool).add(msg.value);
         stocksIndex[stock].betsCount = stocksIndex[stock].betsCount.add(1);
         Deposit(msg.sender, msg.value);
@@ -215,31 +215,31 @@ contract StocksBetting is usingOraclize {
             newOraclizeQuery("Oraclize query was sent, standing by for the answer..");
             ///////////////////////////////////
             // Get close market price
-            queryId = oraclize_query("URL", getURLDaily("MSFT", momentCloseValue));
+            queryId = oraclize_query("URL", getURLDaily("MSFT", momentCloseValue), 500000);
             oraclizeIndex[queryId] = stocks.MSFT;
 
-            queryId = oraclize_query("URL", getURLDaily("AAPL", momentCloseValue));
+            queryId = oraclize_query("URL", getURLDaily("AAPL", momentCloseValue), 500000);
             oraclizeIndex[queryId] = stocks.AAPL;
 
-            queryId = oraclize_query("URL", getURLDaily("GOOG", momentCloseValue));
+            queryId = oraclize_query("URL", getURLDaily("GOOG", momentCloseValue), 500000);
             oraclizeIndex[queryId] = stocks.GOOG;
 
             ///////////////////////////////////
             // Check service availability and Lock Bet Receiving
             uint delay = durationLockBetReceiving * 60;
-            queryId = oraclize_query(delay, "URL", getURLDaily("GOOG", momentCloseValue));
+            queryId = oraclize_query(delay, "URL", getURLDaily("GOOG", momentCloseValue), 500000);
             oraclizeIndex[queryId] = bytes32("CheckService");
 
             ///////////////////////////////////
             // Get 1 min open market price
             delay = delay.add(durationBettingResult * 60);
-            queryId = oraclize_query(delay, "URL", getURLIntraDay("MSFT", momentOpen1MValue));
+            queryId = oraclize_query(delay, "URL", getURLIntraDay("MSFT", momentOpen1MValue), 1000000);
             oraclizeIndex[queryId] = stocks.MSFT;
 
-            queryId = oraclize_query(delay, "URL", getURLIntraDay("AAPL", momentOpen1MValue));
+            queryId = oraclize_query(delay, "URL", getURLIntraDay("AAPL", momentOpen1MValue), 1000000);
             oraclizeIndex[queryId] = stocks.AAPL;
 
-            queryId = oraclize_query(delay, "URL", getURLIntraDay("GOOG", momentOpen1MValue));
+            queryId = oraclize_query(delay, "URL", getURLIntraDay("GOOG", momentOpen1MValue), 1000000);
             oraclizeIndex[queryId] = stocks.GOOG;
 
             actionStatus.duration = delay;
@@ -373,7 +373,7 @@ contract StocksBetting is usingOraclize {
     }
 
     // exposing the total reward amount
-    function getRewardTotal() public constant returns (uint) {
+    function getTotalPool() public constant returns (uint) {
         return (stocksIndex[stocks.AAPL].totalPool.add(stocksIndex[stocks.MSFT].totalPool).add(stocksIndex[stocks.GOOG].totalPool));
     }
 
