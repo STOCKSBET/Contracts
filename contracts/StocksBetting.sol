@@ -87,10 +87,10 @@ contract StocksBetting is usingOraclize {
         oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
         owner = msg.sender;
         queryProp = msg.value;
-        // oraclize_setCustomGasPrice(4000000000 wei);
         stocks.AAPL = bytes32("AAPL");
         stocks.MSFT = bytes32("MSFT");
         stocks.GOOG = bytes32("GOOG");
+        oraclize_setCustomGasPrice(4000000000 wei);
     }
 
     // modifiers for restricting access to methods
@@ -200,7 +200,7 @@ contract StocksBetting is usingOraclize {
     }
 
     function setupBetting(string momentSetup, string momentCloseValue, string momentOpen1MValue, uint durationLockBetReceiving, uint durationBettingResult) public onlyOwner beforeBetReceiving payable returns(bool) {
-        if (oraclize_getPrice("URL") > this.balance) {
+        if (oraclize_getPrice("URL") > this.balance / 10) {
             newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
             return false;
         } else {
@@ -215,31 +215,31 @@ contract StocksBetting is usingOraclize {
             newOraclizeQuery("Oraclize query was sent, standing by for the answer..");
             ///////////////////////////////////
             // Get close market price
-            queryId = oraclize_query("URL", getURLDaily("MSFT", momentCloseValue), 500000);
+            queryId = oraclize_query("URL", getURLDaily("MSFT", momentCloseValue));
             oraclizeIndex[queryId] = stocks.MSFT;
 
-            queryId = oraclize_query("URL", getURLDaily("AAPL", momentCloseValue), 500000);
+            queryId = oraclize_query("URL", getURLDaily("AAPL", momentCloseValue));
             oraclizeIndex[queryId] = stocks.AAPL;
 
-            queryId = oraclize_query("URL", getURLDaily("GOOG", momentCloseValue), 500000);
+            queryId = oraclize_query("URL", getURLDaily("GOOG", momentCloseValue));
             oraclizeIndex[queryId] = stocks.GOOG;
 
             ///////////////////////////////////
             // Check service availability and Lock Bet Receiving
             uint delay = durationLockBetReceiving * 60;
-            queryId = oraclize_query(delay, "URL", getURLDaily("GOOG", momentCloseValue), 500000);
+            queryId = oraclize_query(delay, "URL", getURLDaily("GOOG", momentCloseValue), 300000);
             oraclizeIndex[queryId] = bytes32("CheckService");
 
             ///////////////////////////////////
             // Get 1 min open market price
             delay = delay.add(durationBettingResult * 60);
-            queryId = oraclize_query(delay, "URL", getURLIntraDay("MSFT", momentOpen1MValue), 1000000);
+            queryId = oraclize_query(delay, "URL", getURLIntraDay("MSFT", momentOpen1MValue), 300000);
             oraclizeIndex[queryId] = stocks.MSFT;
 
-            queryId = oraclize_query(delay, "URL", getURLIntraDay("AAPL", momentOpen1MValue), 1000000);
+            queryId = oraclize_query(delay, "URL", getURLIntraDay("AAPL", momentOpen1MValue), 300000);
             oraclizeIndex[queryId] = stocks.AAPL;
 
-            queryId = oraclize_query(delay, "URL", getURLIntraDay("GOOG", momentOpen1MValue), 1000000);
+            queryId = oraclize_query(delay, "URL", getURLIntraDay("GOOG", momentOpen1MValue), 300000);
             oraclizeIndex[queryId] = stocks.GOOG;
 
             actionStatus.duration = delay;
